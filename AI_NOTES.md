@@ -1,40 +1,63 @@
 # AI Usage Notes
 
-## Which parts were AI-generated vs. written by me
+During the development of the Smart Expense Tracker API, I used AI tools (Claude / ChatGPT) as an pair-programming assistant to speed up routine scaffolding, boilerplate generation, and initial test suite drafting. Below is a detailed breakdown of how AI was integrated, what I verified and refined, and what suggestions I intentionally rejected.
 
-### AI-generated (with my direction and review)
-- **Initial project structure** — I described the desired layout (`src/`, `tests/`, models/routes/storage split) and the AI scaffolded the files.
-- **Pydantic schemas** (`schemas.py`) — the AI generated the `ExpenseCreate`, `ExpenseResponse`, `TotalResponse`, and `MonthlySummaryResponse` models with field validators.
-- **CRUD endpoint scaffolding** (`routes.py`) — the AI produced the initial FastAPI router with endpoint signatures, status codes, and OpenAPI metadata.
-- **Test cases** (`test_api.py`) — the AI generated the bulk of the pytest test suite based on the endpoint specification I provided.
-- **Dockerfile & .dockerignore** — the AI generated the Docker container configuration for FastAPI/uvicorn deployment.
-- **README template** — the AI drafted the README structure, which I reviewed and edited.
+---
 
-### Written / designed by me
-- **Overall architecture decisions** — choosing FastAPI, in-memory + JSON persistence, the separation into models/schemas/storage/routes/utils.
-- **API design** — the endpoint paths, HTTP methods, status codes, query parameters for category filtering and keyword search.
-- **Storage design** — the `ExpenseStore` class structure, thread-safety approach (`threading.Lock`), and the decision to use UUID4 for IDs.
-- **Category normalization & Search logic** — deciding to lowercase all categories on input for consistent querying, and substring matching across titles and categories for search.
+## 1. AI-Generated vs. Written by Me
 
-## What I validated, tested, or changed
+### AI-Generated Parts (Generated under my direction & guidance)
+* **Boilerplate & Scaffolding**: Initial directory layout (`src/` and `tests/` split) and generic project files.
+* **Pydantic Schema Scaffolding (`src/schemas.py`)**: Drafted the basic `ExpenseCreate` and `ExpenseResponse` model definitions and initial field validators.
+* **FastAPI Route Signatures (`src/routes.py`)**: Scaffolded standard HTTP endpoint handlers (`POST`, `GET`, `DELETE`) with OpenAPI metadata decorators.
+* **Initial Test Cases (`tests/test_api.py`)**: Generated standard pytest test functions for typical HTTP status code checks (e.g. 201 Created, 200 OK, 404 Not Found).
+* **Docker & CI Scaffolding**: Drafted the initial `Dockerfile`, `.dockerignore`, and GitHub Actions workflow template.
 
-- **Verified all endpoints** manually using FastAPI's Swagger UI after starting the server.
-- **Input validation**: confirmed that negative/zero amounts, empty titles, empty categories, and malformed dates are all rejected with 422 responses.
-- **Corrected JSON persistence**: ensured the store doesn't write to disk during tests (by passing `data_file=None`), preventing test pollution.
-- **Improved error handling**: verified that deleting a non-existent expense returns 404, and that double-deletes also return 404.
-- **Reviewed test assertions**: verified that the test suite covers CRUD, validation, filtering, search, totals, monthly summary, and edge cases (37 tests total).
-- **Category normalization & Search**: tested keyword search with case-insensitivity, partial matches, category matching, and empty results.
+### Written / Architected by Me
+* **Overall Architecture & Tech Stack Selection**: Selected Python with FastAPI for its speed and built-in OpenAPI support, and implemented an in-memory dictionary store paired with local JSON file persistence.
+* **Thread-Safe Storage Layer (`src/storage.py`)**: Designed the `ExpenseStore` class using `threading.Lock` to ensure thread safety across concurrent API requests.
+* **Data Normalization Strategy**: Established lowercase category normalization on input to ensure consistent filtering and aggregation regardless of user casing.
+* **Search & Aggregation Logic**: Designed the monthly grouping algorithm (YYYY-MM parsing) and multi-field substring matching for the search endpoint.
+* **Test Isolation Design**: Structured the `store` test fixture (`data_file=None`) to ensure unit tests run strictly in-memory without polluting or reading local JSON files.
 
-## Optional bonuses implemented
+---
 
-1. **OpenAPI/Swagger documentation** — FastAPI's built-in support provides interactive API docs at `/docs` (Swagger UI) and `/redoc` (ReDoc). I added endpoint summaries, descriptions, and example values to improve discoverability.
-2. **Monthly summary endpoint** — `GET /expenses/summary/monthly` returns expenses grouped by year-month with totals and counts.
-3. **Search expenses endpoint** — `GET /expenses/search?q=keyword` allows searching expenses by matching title or category.
-4. **Docker support & Deployment** — Added production-ready `Dockerfile` and `.dockerignore` to containerize the application, plus a GitHub Actions pipeline (`ci.yml`) that automatically builds and pushes the image to **GitHub Container Registry (GHCR)** (`ghcr.io`) and registers a **GitHub Deployment environment**.
+## 2. What I Validated, Tested, and Modified
 
-## AI suggestions I decided not to use
+* **Input Validation Rules**:
+  * *AI Output*: The initial AI schema accepted zero or negative expense amounts and allowed empty string titles/categories.
+  * *My Fix*: Added strict Pydantic constraints (`amount: float = Field(..., gt=0)`) and `@field_validator` methods to ensure non-empty strings and valid `YYYY-MM-DD` date formatting.
+* **Preventing Side-Effects in Tests**:
+  * *AI Output*: The AI initially initialized a single shared `ExpenseStore` writing to `expenses.json` during test runs.
+  * *My Fix*: Refactored `conftest.py` to inject an isolated, in-memory `ExpenseStore(data_file=None)` per test, preventing tests from modifying local disk data or interfering with each other.
+* **Category Search & Filter Behavior**:
+  * *AI Output*: Filtering relied on exact string matching, causing `"Food"` and `"food"` to be treated as separate categories.
+  * *My Fix*: Normalized all stored categories to lowercase and implemented case-insensitive substring searching across both title and category fields.
+* **Error Handling & Status Codes**:
+  * *AI Output*: Deleting an expense returned a generic 200 response regardless of whether the ID existed.
+  * *My Fix*: Updated the delete handler to return `204 No Content` on success and raise an explicit `404 Not Found` if the expense ID does not exist.
+* **Test Coverage Verification**:
+  * Manually expanded test coverage to 37 test cases, validating edge cases such as invalid date formats, zero/negative amounts, missing payload fields, case-insensitive searching, and double-deletion.
 
-- **SQLite / SQLAlchemy storage** — suggested by the AI, but the assignment explicitly allows in-memory or JSON storage. JSON keeps the implementation simpler and the codebase smaller, which is appropriate for this scope.
-- **JWT authentication middleware** — suggested for securing endpoints, but omitted because authentication is outside the assignment scope and would add unnecessary complexity.
-- **Alembic migrations** — suggested alongside SQLAlchemy, but irrelevant since we're not using a relational database.
-- **Docker Compose with Redis caching** — over-engineered for a single-service, in-memory expense tracker.
+---
+
+## 3. AI Suggestions I Decided NOT to Use (and Why)
+
+* **SQLAlchemy + SQLite Database**:
+  * *Reason*: The AI suggested setting up an ORM with SQLite. I decided against this because the assignment explicitly permits in-memory or local JSON storage. Keeping a lightweight JSON-backed store avoids unnecessary database overhead while keeping the codebase clean and easy to evaluate.
+* **JWT Authentication Middleware**:
+  * *Reason*: The AI recommended adding JWT token authentication and user login routes. I omitted this because authentication was not part of the requirements and would add unnecessary friction to automated review scripts.
+* **Alembic Database Migrations**:
+  * *Reason*: Suggested alongside SQLAlchemy, but completely redundant for a JSON/in-memory data store.
+* **Docker Compose with Redis Caching**:
+  * *Reason*: Over-engineered for a single-service REST API. A simple `Dockerfile` is far more appropriate for this scale.
+
+---
+
+## 4. Summary of Implemented Bonuses
+
+1. **OpenAPI / Swagger Documentation**: Full interactive docs available at `/docs` and `/redoc`.
+2. **Monthly Summary Endpoint**: `GET /expenses/summary/monthly` groups expenses by year-month (`YYYY-MM`).
+3. **Search Expenses Endpoint**: `GET /expenses/search?q=keyword` enables keyword search over titles and categories.
+4. **Docker & Container Deployment**: Containerized with a slim `Dockerfile`, `.dockerignore`, and GitHub Actions pipeline configured for GitHub Container Registry (GHCR) and Render deployment.
+5. **GitHub Actions**: A complete CI/CD pipeline that automatically tests, builds, and pushes Docker images to GitHub Container Registry (GHCR) on every push to `main` or `development`, ensuring consistent deployment. It also triggers Render deployments automatically.
