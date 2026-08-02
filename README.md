@@ -1,48 +1,113 @@
 # Smart Expense Tracker API
 
-A RESTful API to manage personal expenses, built with **Python** and **FastAPI**.
+A RESTful API for managing personal expenses, built with **FastAPI** and **Python**. The application provides expense management capabilities with request validation, persistent local storage, interactive API documentation, automated testing, and containerized deployment.
 
 ## Features
 
-- **Add** an expense (auto-generated UUID, title, amount, category, date)
-- **View** all expenses
-- **View** a single expense by ID
-- **Filter** expenses by category
-- **Search** expenses by keyword (bonus) — case-insensitive substring match on title and category
-- **Calculate totals** — overall and by category
-- **Delete** an expense
-- **Monthly summary** (bonus) — expenses grouped by month (YYYY-MM)
-- **OpenAPI / Swagger docs** (bonus) — interactive API documentation
-- **Docker support** (bonus) — Containerized deployment with Docker & Dockerignore
+* Create expenses with automatically generated UUIDs
+* Retrieve all expenses
+* Retrieve an expense by ID
+* Filter expenses by category
+* Search expenses by title or category (case-insensitive)
+* Calculate total expenses (overall and by category)
+* Delete expenses
+* Generate monthly expense summaries
+* Interactive OpenAPI documentation (Swagger UI & ReDoc)
+* Docker support for containerized deployment
 
-## Tech Stack
+---
 
-| Component | Technology |
-|-----------|------------|
-| Framework | FastAPI |
-| Validation | Pydantic v2 |
-| Storage | In-memory + local JSON file |
-| Testing | pytest + FastAPI TestClient |
-| Docs | OpenAPI 3.1 (auto-generated) |
-| Container | Docker |
+## Technology Stack
+
+| Component        | Technology                      |
+| ---------------- | ------------------------------- |
+| Language         | Python 3.10+                    |
+| Framework        | FastAPI                         |
+| Validation       | Pydantic v2                     |
+| Storage          | In-memory with JSON persistence |
+| Testing          | Pytest, FastAPI TestClient      |
+| Documentation    | OpenAPI 3.1, Swagger UI, ReDoc  |
+| Containerization | Docker                          |
+
+---
+
+## Project Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── src/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models.py
+│   ├── routes.py
+│   ├── schemas.py
+│   ├── storage.py
+│   └── utils.py
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── test_api.py
+├── Dockerfile
+├── .dockerignore
+├── render.yaml
+├── requirements.txt
+├── pytest.ini
+├── README.md
+└── AI_NOTES.md
+```
+
+---
 
 ## Installation
+
+Clone the repository and install the required dependencies.
+
+```bash
+git clone <repository-url>
+cd smart-expense-tracker
+python -m venv .venv
+```
+
+### Linux/macOS
+
+```bash
+source .venv/bin/activate
+```
+
+### Windows
+
+```powershell
+.venv\Scripts\activate
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Running the Server
+---
 
-### Option 1: Local Development
+## Running the Application
+
+### Local Development
 
 ```bash
 uvicorn src.main:app --reload
 ```
 
-The server starts at **http://localhost:8000**.
+The application will be available at:
 
-### Option 2: Docker Container
+```
+http://localhost:8000
+```
+
+---
+
+### Docker
 
 Build the Docker image:
 
@@ -56,117 +121,136 @@ Run the container:
 docker run -p 8000:8000 smart-expense-tracker
 ```
 
-### Option 3: Deploy to Render
+---
 
-This repository includes a `render.yaml` Blueprint file for automatic deployment on Render:
+### Render Deployment
 
-1. Push this repository to GitHub.
-2. Go to [Render Dashboard](https://dashboard.render.com/) -> **New +** -> **Blueprint**.
-3. Connect your GitHub repository. Render automatically builds the Dockerfile and deploys your Web Service!
+This repository includes a `render.yaml` Blueprint configuration.
+
+Deployment steps:
+
+1. Push the repository to GitHub.
+2. Create a new **Blueprint** service in Render.
+3. Connect the repository.
+4. Render automatically builds the Docker image and deploys the application.
+
+---
 
 ## API Documentation
 
-After starting the server:
+FastAPI automatically generates interactive API documentation.
 
-- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+| Documentation         | URL             |
+| --------------------- | --------------- |
+| Swagger UI            | `/docs`         |
+| ReDoc                 | `/redoc`        |
+| OpenAPI Specification | `/openapi.json` |
+
+---
 
 ## Running Tests
+
+Execute the complete test suite:
 
 ```bash
 pytest
 ```
 
-or using python module execution:
+or
 
 ```bash
 python -m pytest -v
 ```
 
+---
+
 ## API Endpoints
 
-| Method   | Endpoint                    | Description                          |
-|----------|-----------------------------|--------------------------------------|
-| `GET`    | `/`                         | Health check                         |
-| `POST`   | `/expenses`                 | Add a new expense                    |
-| `GET`    | `/expenses`                 | List all expenses                    |
-| `GET`    | `/expenses?category=food`   | Filter expenses by category          |
-| `GET`    | `/expenses/search?q=lunch`  | Search expenses by keyword (bonus)   |
-| `GET`    | `/expenses/{id}`            | Get a single expense                 |
-| `DELETE` | `/expenses/{id}`            | Delete an expense                    |
-| `GET`    | `/expenses/total`           | Get total of all expenses            |
-| `GET`    | `/expenses/total/{category}`| Get total for a specific category    |
-| `GET`    | `/expenses/summary/monthly` | Monthly expense summary (bonus)      |
+| Method | Endpoint                        | Description                             |
+| ------ | ------------------------------- | --------------------------------------- |
+| GET    | `/`                             | Health check                            |
+| POST   | `/expenses`                     | Create a new expense                    |
+| GET    | `/expenses`                     | Retrieve all expenses                   |
+| GET    | `/expenses?category={category}` | Filter expenses by category             |
+| GET    | `/expenses/search?q={keyword}`  | Search expenses                         |
+| GET    | `/expenses/{id}`                | Retrieve an expense by ID               |
+| DELETE | `/expenses/{id}`                | Delete an expense                       |
+| GET    | `/expenses/total`               | Calculate total expenses                |
+| GET    | `/expenses/total/{category}`    | Calculate total expenses for a category |
+| GET    | `/expenses/summary/monthly`     | Retrieve monthly expense summary        |
 
-## Example Usage
+---
 
-### Add an expense
+## Example Requests
+
+### Create an Expense
 
 ```bash
 curl -X POST http://localhost:8000/expenses \
   -H "Content-Type: application/json" \
-  -d '{"title": "Lunch", "amount": 12.50, "category": "food", "date": "2026-08-01"}'
+  -d '{
+        "title": "Lunch",
+        "amount": 12.50,
+        "category": "Food",
+        "date": "2026-08-01"
+      }'
 ```
 
-### List all expenses
+### Retrieve All Expenses
 
 ```bash
 curl http://localhost:8000/expenses
 ```
 
-### Filter by category
+### Filter by Category
 
 ```bash
-curl "http://localhost:8000/expenses?category=food"
+curl "http://localhost:8000/expenses?category=Food"
 ```
 
-### Search expenses
+### Search Expenses
 
 ```bash
 curl "http://localhost:8000/expenses/search?q=lunch"
 ```
 
-### Get total expenses
+### Calculate Total Expenses
 
 ```bash
 curl http://localhost:8000/expenses/total
 ```
 
-### Get monthly summary
+### Retrieve Monthly Summary
 
 ```bash
 curl http://localhost:8000/expenses/summary/monthly
 ```
 
-### Delete an expense
+### Delete an Expense
 
 ```bash
-curl -X DELETE http://localhost:8000/expenses/{id}
+curl -X DELETE http://localhost:8000/expenses/{expense_id}
 ```
 
-## Project Structure
+---
 
-```
-├── .github/
-│   └── workflows/
-│       └── ci.yml      # GitHub Actions CI workflow
-├── README.md
-├── AI_NOTES.md
-├── requirements.txt
-├── pytest.ini
-├── render.yaml
-├── Dockerfile
-├── .dockerignore
-├── src/
-│   ├── __init__.py
-│   ├── main.py         # FastAPI app entry point
-│   ├── models.py       # Expense data model
-│   ├── routes.py       # API endpoint definitions
-│   ├── schemas.py      # Pydantic request/response schemas
-│   ├── storage.py      # In-memory store with JSON persistence
-│   └── utils.py        # Helper utilities
-└── tests/
-    ├── __init__.py
-    ├── conftest.py     # Shared test fixtures
-    └── test_api.py     # API test suite
-```
+## Data Persistence
+
+Expense records are maintained in memory during application execution and are automatically persisted to a local JSON file, ensuring data is retained across application restarts.
+
+---
+
+## Continuous Integration
+
+The repository includes a GitHub Actions workflow that automatically:
+
+* Installs project dependencies
+* Executes the complete test suite
+* Builds the Docker image
+* Publishes the Docker image to GitHub Container Registry (GHCR) on eligible branch pushes
+
+---
+
+## License
+
+This project is provided for educational and assessment purposes.
