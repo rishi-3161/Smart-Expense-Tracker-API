@@ -1,0 +1,12 @@
+.git
+.gitignore
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+venv/
+.vscode/
+.agents/
+expenses.json
+README.md
+AI_NOTES.md
