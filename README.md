@@ -114,7 +114,9 @@ Build the Docker image/Pull from GHCR:
 ```bash
 docker build -t smart-expense-tracker .
 ```
+
 or
+
 ```bash
 docker pull ghcr.io/rishi-3161/smart-expense-tracker-api:latest
 ```
