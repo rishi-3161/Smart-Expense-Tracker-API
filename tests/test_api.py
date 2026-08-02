@@ -1,19 +1,10 @@
-"""Comprehensive tests for the Smart Expense Tracker API."""
-
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
 
 
-# =====================================================================
-# CRUD — Create
-# =====================================================================
-
-
 class TestCreateExpense:
-    """Tests for POST /expenses."""
-
     def test_create_expense_returns_201(self, client: TestClient, sample_expense: dict):
         resp = client.post("/expenses", json=sample_expense)
         assert resp.status_code == 201
@@ -29,7 +20,6 @@ class TestCreateExpense:
         assert data["title"] == sample_expense["title"]
         assert data["amount"] == sample_expense["amount"]
         assert data["date"] == sample_expense["date"]
-        # category is normalized to lowercase
         assert data["category"] == sample_expense["category"].lower()
 
     def test_create_expense_normalizes_category(self, client: TestClient):
@@ -50,14 +40,7 @@ class TestCreateExpense:
         assert id1 != id2
 
 
-# =====================================================================
-# CRUD — Read
-# =====================================================================
-
-
 class TestGetExpenses:
-    """Tests for GET /expenses and GET /expenses/{id}."""
-
     def test_list_empty_returns_empty_list(self, client: TestClient):
         resp = client.get("/expenses")
         assert resp.status_code == 200
@@ -86,14 +69,7 @@ class TestGetExpenses:
         assert resp.status_code == 404
 
 
-# =====================================================================
-# CRUD — Delete
-# =====================================================================
-
-
 class TestDeleteExpense:
-    """Tests for DELETE /expenses/{id}."""
-
     def test_delete_existing_returns_204(
         self, client: TestClient, sample_expense: dict
     ):
@@ -118,14 +94,7 @@ class TestDeleteExpense:
         assert resp.status_code == 404
 
 
-# =====================================================================
-# Validation
-# =====================================================================
-
-
 class TestValidation:
-    """Tests for input validation on POST /expenses."""
-
     def test_missing_title_returns_422(self, client: TestClient):
         payload = {"amount": 10.0, "category": "food", "date": "2026-01-01"}
         resp = client.post("/expenses", json=payload)
@@ -167,14 +136,7 @@ class TestValidation:
         assert resp.status_code == 422
 
 
-# =====================================================================
-# Filtering by category
-# =====================================================================
-
-
 class TestFilterByCategory:
-    """Tests for GET /expenses?category=..."""
-
     def test_filter_returns_matching_expenses(
         self, client: TestClient, multiple_expenses: list[dict]
     ):
@@ -183,7 +145,6 @@ class TestFilterByCategory:
         resp = client.get("/expenses", params={"category": "food"})
         assert resp.status_code == 200
         data = resp.json()
-        # 3 food items in the fixture
         assert len(data) == 3
         assert all(e["category"] == "food" for e in data)
 
@@ -200,14 +161,7 @@ class TestFilterByCategory:
         assert resp.json() == []
 
 
-# =====================================================================
-# Totals
-# =====================================================================
-
-
 class TestTotals:
-    """Tests for GET /expenses/total and GET /expenses/total/{category}."""
-
     def test_total_empty_store(self, client: TestClient):
         resp = client.get("/expenses/total")
         assert resp.status_code == 200
@@ -246,14 +200,7 @@ class TestTotals:
         assert data["count"] == 0
 
 
-# =====================================================================
-# Monthly summary (bonus)
-# =====================================================================
-
-
 class TestMonthlySummary:
-    """Tests for GET /expenses/summary/monthly."""
-
     def test_monthly_summary_empty(self, client: TestClient):
         resp = client.get("/expenses/summary/monthly")
         assert resp.status_code == 200
@@ -267,29 +214,19 @@ class TestMonthlySummary:
         resp = client.get("/expenses/summary/monthly")
         data = resp.json()["summary"]
 
-        # Fixture has expenses in 2026-08 and 2026-07
         months = {item["month"] for item in data}
         assert months == {"2026-08", "2026-07"}
 
         aug = next(item for item in data if item["month"] == "2026-08")
-        # Aug expenses: 12.50 + 25.00 + 18.75 = 56.25
         assert aug["total"] == pytest.approx(56.25)
         assert aug["count"] == 3
 
         jul = next(item for item in data if item["month"] == "2026-07")
-        # Jul expenses: 15.00 + 45.30 = 60.30
         assert jul["total"] == pytest.approx(60.30)
         assert jul["count"] == 2
 
 
-# =====================================================================
-# Search (bonus)
-# =====================================================================
-
-
 class TestSearch:
-    """Tests for GET /expenses/search?q=..."""
-
     def test_search_by_title_keyword(
         self, client: TestClient, multiple_expenses: list[dict]
     ):
@@ -326,7 +263,6 @@ class TestSearch:
     ):
         for exp in multiple_expenses:
             client.post("/expenses", json=exp)
-        # "er" matches "Uber ride", "Dinner"
         resp = client.get("/expenses/search", params={"q": "er"})
         assert resp.status_code == 200
         titles = {e["title"] for e in resp.json()}
@@ -344,14 +280,7 @@ class TestSearch:
         assert resp.status_code == 422
 
 
-# =====================================================================
-# Health check
-# =====================================================================
-
-
 class TestHealthCheck:
-    """Tests for GET /."""
-
     def test_root_returns_ok(self, client: TestClient):
         resp = client.get("/")
         assert resp.status_code == 200

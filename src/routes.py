@@ -1,5 +1,3 @@
-"""API route definitions for the Expense Tracker."""
-
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -14,19 +12,12 @@ from src.storage import ExpenseStore
 
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
 
-# The store instance is injected by main.py via the module-level variable.
 store: ExpenseStore = ExpenseStore(data_file=None)
 
 
 def set_store(s: ExpenseStore) -> None:
-    """Replace the module-level store (called from main.py and tests)."""
     global store
     store = s
-
-
-# ---------------------------------------------------------------------------
-# CRUD endpoints
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -51,7 +42,7 @@ def create_expense(payload: ExpenseCreate) -> ExpenseResponse:
     response_model=list[ExpenseResponse],
     summary="List expenses",
     description=(
-        "Return all expenses.  Optionally filter by category using the "
+        "Return all expenses. Optionally filter by category using the "
         "`category` query parameter."
     ),
 )

@@ -1,5 +1,3 @@
-"""Pydantic schemas for request validation and response serialization."""
-
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -8,22 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-# ---------------------------------------------------------------------------
-# Request schemas
-# ---------------------------------------------------------------------------
-
 class ExpenseCreate(BaseModel):
-    """Schema for creating a new expense.
-
-    Example:
-        {
-            "title": "Lunch at café",
-            "amount": 12.50,
-            "category": "food",
-            "date": "2026-08-01"
-        }
-    """
-
     title: str = Field(
         ...,
         min_length=1,
@@ -53,7 +36,6 @@ class ExpenseCreate(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date_format(cls, v: str) -> str:
-        """Ensure the date string is a valid YYYY-MM-DD date."""
         try:
             datetime.strptime(v, "%Y-%m-%d")
         except ValueError:
@@ -63,23 +45,15 @@ class ExpenseCreate(BaseModel):
     @field_validator("category")
     @classmethod
     def normalize_category(cls, v: str) -> str:
-        """Store categories in lowercase for consistent filtering."""
         return v.strip().lower()
 
     @field_validator("title")
     @classmethod
     def strip_title(cls, v: str) -> str:
-        """Strip leading/trailing whitespace from the title."""
         return v.strip()
 
 
-# ---------------------------------------------------------------------------
-# Response schemas
-# ---------------------------------------------------------------------------
-
 class ExpenseResponse(BaseModel):
-    """Schema returned when reading an expense."""
-
     id: str
     title: str
     amount: float
@@ -98,8 +72,6 @@ class ExpenseResponse(BaseModel):
 
 
 class TotalResponse(BaseModel):
-    """Schema for total expense calculations."""
-
     total: float = Field(..., description="Sum of expense amounts")
     category: Optional[str] = Field(
         None, description="Category name, if filtered"
@@ -108,14 +80,10 @@ class TotalResponse(BaseModel):
 
 
 class MonthlySummaryItem(BaseModel):
-    """A single row in the monthly summary."""
-
     month: str = Field(..., description="Year-month string, e.g. '2026-08'")
     total: float = Field(..., description="Total expenses for this month")
     count: int = Field(..., description="Number of expenses in this month")
 
 
 class MonthlySummaryResponse(BaseModel):
-    """Response for the monthly summary endpoint."""
-
     summary: list[MonthlySummaryItem]
