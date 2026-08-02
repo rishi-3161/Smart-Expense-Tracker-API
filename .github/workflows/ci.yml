@@ -44,7 +44,7 @@ jobs:
       deployments: write
 
     environment:
-      name: production
+      name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: https://github.com/${{ github.repository }}/pkgs/container/${{ github.event.repository.name }}
 
     steps:
