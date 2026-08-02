@@ -109,10 +109,14 @@ http://localhost:8000
 
 ### Docker
 
-Build the Docker image:
+Build the Docker image/Pull from GHCR:
 
 ```bash
 docker build -t smart-expense-tracker .
+```
+or
+```bash
+docker pull ghcr.io/rishi-3161/smart-expense-tracker-api:latest
 ```
 
 Run the container:
@@ -120,19 +124,6 @@ Run the container:
 ```bash
 docker run -p 8000:8000 smart-expense-tracker
 ```
-
----
-
-### Render Deployment
-
-This repository includes a `render.yaml` Blueprint configuration.
-
-Deployment steps:
-
-1. Push the repository to GitHub.
-2. Create a new **Blueprint** service in Render.
-3. Connect the repository.
-4. Render automatically builds the Docker image and deploys the application.
 
 ---
 
