@@ -253,4 +253,8 @@ The repository includes a GitHub Actions workflow that automatically:
 
 ## License
 
-This project is provided for educational and assessment purposes.
+This project is proprietary and is provided for evaluation purposes only.
+
+© 2026 Rushyendra. All Rights Reserved.
+
+Unauthorized copying, redistribution, or submission of this work as academic coursework is prohibited.
